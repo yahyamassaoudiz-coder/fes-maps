@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>1ffaa17e-f792-4b8b-a54e-f91ecc536ce8</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Yahya</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Fès Maps" />
+  <Description DefaultValue="Insert detailed, styled maps of Fès (medina, derbs, heritage, economic activity) into slides." />
+  <IconUrl DefaultValue="https://yahyamassaoudiz-coder.github.io/fes-maps/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://yahyamassaoudiz-coder.github.io/fes-maps/assets/icon-64.png" />
+  <SupportUrl DefaultValue="https://www.openstreetmap.org/copyright" />
+  <AppDomains>
+    <AppDomain>https://yahyamassaoudiz-coder.github.io</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Presentation" />
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://yahyamassaoudiz-coder.github.io/fes-maps/taskpane.html" />
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Presentation">
+        <DesktopFormFactor>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabInsert">
+              <Group id="FesMaps.Group">
+                <Label resid="FesMaps.GroupLabel" />
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16" />
+                  <bt:Image size="32" resid="Icon.32" />
+                  <bt:Image size="80" resid="Icon.80" />
+                </Icon>
+                <Control xsi:type="Button" id="FesMaps.Open">
+                  <Label resid="FesMaps.ButtonLabel" />
+                  <Supertip>
+                    <Title resid="FesMaps.ButtonLabel" />
+                    <Description resid="FesMaps.ButtonTip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16" />
+                    <bt:Image size="32" resid="Icon.32" />
+                    <bt:Image size="80" resid="Icon.80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>FesMapsPane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="https://yahyamassaoudiz-coder.github.io/fes-maps/assets/icon-16.png" />
+        <bt:Image id="Icon.32" DefaultValue="https://yahyamassaoudiz-coder.github.io/fes-maps/assets/icon-32.png" />
+        <bt:Image id="Icon.80" DefaultValue="https://yahyamassaoudiz-coder.github.io/fes-maps/assets/icon-80.png" />
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://yahyamassaoudiz-coder.github.io/fes-maps/taskpane.html" />
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="FesMaps.GroupLabel" DefaultValue="Fès Maps" />
+        <bt:String id="FesMaps.ButtonLabel" DefaultValue="Fès Map" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="FesMaps.ButtonTip" DefaultValue="Open the Fès map builder: choose an area, detail and style, then insert the map." />
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

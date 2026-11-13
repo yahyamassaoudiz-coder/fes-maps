@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fès Maps</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <link rel="stylesheet" href="leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="mark">◆</span> Fès Maps</div>
+    <div id="status" class="status">Ready</div>
+  </header>
+
+  <main>
+    <!-- 1. AREA -->
+    <section class="card" open>
+      <h2><span class="num">1</span> Area</h2>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="draw">Draw</button>
+        <button class="tab" data-tab="places">Places</button>
+        <button class="tab" data-tab="quick">Quick areas</button>
+      </div>
+      <div id="map" class="map"></div>
+
+      <div class="tabpanel" data-panel="draw">
+        <div class="row">
+          <button id="btnDraw" class="btn">▭ Draw rectangle</button>
+          <button id="btnView" class="btn ghost">Use map view</button>
+        </div>
+        <p class="hint">Click <b>Draw rectangle</b>, then drag on the map.</p>
+      </div>
+
+      <div class="tabpanel hidden" data-panel="places">
+        <textarea id="placeInput" rows="3" placeholder="One per line or comma-separated, e.g.&#10;Bab Bou Jeloud, Médersa Bou Inania, Quaraouiyine, Chouara"></textarea>
+        <div class="row">
+          <button id="btnFind" class="btn">Find places</button>
+          <label class="inline">Margin <input id="placePad" type="range" min="5" max="80" value="25" /> <span id="placePadV">25%</span></label>
+        </div>
+        <ul id="placeResults" class="results"></ul>
+        <label class="check"><input type="checkbox" id="highlightPlaces" checked /> Highlight these places on the map</label>
+      </div>
+
+      <div class="tabpanel hidden" data-panel="quick">
+        <div class="grid2">
+          <button class="btn ghost quick" data-area="medina">Médina · Fès el-Bali</button>
+          <button class="btn ghost quick" data-area="jdid">Fès Jdid</button>
+          <button class="btn ghost quick" data-area="vn">Ville Nouvelle</button>
+          <button class="btn ghost quick" data-area="grand">Grand Fès</button>
+        </div>
+        <p class="hint">Starting frames — adjust with Draw if needed.</p>
+      </div>
+      <div id="areaInfo" class="areainfo">No area selected</div>
+    </section>
+
+    <!-- 2. DETAIL -->
+    <section class="card">
+      <h2><span class="num">2</span> Detail depth</h2>
+      <input id="level" type="range" min="1" max="5" step="1" value="4" class="full" />
+      <div class="ticks"><span>City</span><span>District</span><span>Quarter</span><span>Street</span><span>Max</span></div>
+      <p id="levelDesc" class="hint"></p>
+      <p id="sizeWarn" class="warn hidden"></p>
+    </section>
+
+    <!-- 3. LAYERS -->
+    <section class="card">
+      <h2><span class="num">3</span> Layers</h2>
+      <label class="check"><input type="checkbox" data-layer="streets" checked /> Streets &amp; derbs</label>
+      <label class="check"><input type="checkbox" data-layer="buildings" checked /> Buildings</label>
+      <label class="check"><input type="checkbox" data-layer="heritage" checked /> Heritage (monuments, babs, ramparts, medersas)</label>
+      <label class="check"><input type="checkbox" data-layer="economic" checked /> Economic activity (souks, crafts, shops, zones)</label>
+      <label class="check"><input type="checkbox" data-layer="zoning" checked /> Zoning &amp; boundaries</label>
+      <label class="check"><input type="checkbox" data-layer="base" checked /> Water, green spaces, rail</label>
+      <hr />
+      <label class="check"><input type="checkbox" id="labels" checked /> Labels</label>
+      <div class="sub row">
+        <select id="lang">
+          <option value="fr+en" selected>Français + English</option>
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+        <label class="check small"><input type="checkbox" id="arabicFallback" checked /> Arabic if no Latin name</label>
+      </div>
+      <hr />
+      <div class="subhead">Data sources — merged into one map</div>
+      <label class="check small"><input type="checkbox" checked disabled /> OpenStreetMap — streets, derbs, heritage, places (always on)</label>
+      <label class="check small"><input type="checkbox" data-source="footprints" /> Google + Microsoft building footprints — fill gaps</label>
+      <label class="check small sub2"><input type="checkbox" id="markInferred" /> Mark AI-detected buildings (dashed)</label>
+      <label class="check small"><input type="checkbox" data-source="overture" /> Overture places — shops, cafés, services</label>
+      <label class="check small"><input type="checkbox" data-source="wikidata" /> Wikidata — official names (FR/EN/AR) &amp; position checks</label>
+      <details class="adv"><summary>Advanced</summary>
+        <label class="field">Overture release <input id="overtureRelease" type="text" /></label>
+      </details>
+      <div id="sourceReport" class="report hidden"></div>
+    </section>
+
+    <!-- 4. PLACES & LABELS -->
+    <section class="card" id="placesCard">
+      <h2><span class="num">4</span> Places &amp; names <span id="placesCount" class="opt"></span></h2>
+      <div class="tabs">
+        <button class="tab ptab active" data-ptab="types">By type</button>
+        <button class="tab ptab" data-ptab="items">One by one</button>
+      </div>
+      <div class="massbar">
+        <span>All locations</span><button class="btn ghost small" data-mass="loc:1">Show</button><button class="btn ghost small" data-mass="loc:0">Hide</button>
+        <span>All names</span><button class="btn ghost small" data-mass="name:1">Show</button><button class="btn ghost small" data-mass="name:0">Hide</button>
+        <button class="btn ghost small" id="visReset" title="Back to automatic (based on detail depth)">Reset</button>
+      </div>
+      <div data-ppanel="types">
+        <div class="vhead"><span></span><span title="Show the symbol on the map">Location</span><span title="Show the name label">Name</span></div>
+        <div id="typeList" class="typelist"></div>
+      </div>
+      <div data-ppanel="items" class="hidden">
+        <div class="row">
+          <input id="itemSearch" type="text" placeholder="Search a place…" class="grow" />
+          <select id="itemType" style="width: 40%"></select>
+        </div>
+        <div class="vhead"><span id="itemCount"></span><span>Location</span><span>Name</span></div>
+        <div id="itemList" class="itemlist"></div>
+      </div>
+    </section>
+
+    <!-- 4. STYLE -->
+    <section class="card">
+      <h2><span class="num">5</span> Style</h2>
+      <div class="row">
+        <select id="preset" class="grow"></select>
+        <button id="btnSavePreset" class="btn ghost small">Save as…</button>
+      </div>
+      <div id="saveRow" class="row hidden">
+        <input id="presetName" type="text" placeholder="Preset name, e.g. Client deck" class="grow" />
+        <button id="btnSaveConfirm" class="btn small">Save</button>
+      </div>
+      <details id="manual">
+        <summary>Customize colors &amp; type</summary>
+        <div id="colorGrid" class="colors"></div>
+        <label class="field">Font
+          <select id="font"></select>
+        </label>
+        <label class="field">Label size <input id="labelScale" type="range" min="0.6" max="2" step="0.05" value="1" /></label>
+        <label class="field">Line weight <input id="lineScale" type="range" min="0.5" max="2.5" step="0.05" value="1" /></label>
+        <label class="check"><input type="checkbox" id="casing" /> Road casing (outlines)</label>
+        <label class="check"><input type="checkbox" id="buildingOutline" /> Building outlines</label>
+        <label class="check"><input type="checkbox" id="uppercaseQuarters" /> Quarter names in capitals</label>
+        <button id="btnDeletePreset" class="btn ghost small hidden">Delete this saved preset</button>
+      </details>
+    </section>
+
+    <!-- 5. YOUR GIS LAYERS -->
+    <section class="card">
+      <h2><span class="num">6</span> Your GIS layers <span class="opt">optional</span></h2>
+      <label class="drop">
+        <input id="fileInput" type="file" multiple accept=".geojson,.json,.kml,.gpx,.zip" />
+        <span>Add GeoJSON, KML, GPX or zipped shapefile — e.g. project zones, HDX boundaries, Overture places</span>
+      </label>
+      <ul id="customList" class="customlist"></ul>
+    </section>
+
+    <!-- 6. OUTPUT -->
+    <section class="card">
+      <h2><span class="num">7</span> Output</h2>
+      <div class="seg" id="format">
+        <button class="segbtn active" data-v="svg">Editable vector</button>
+        <button class="segbtn" data-v="png">Image (PNG)</button>
+      </div>
+      <p id="formatHint" class="hint">Right-click the map in PowerPoint → <b>Convert to Shape</b> (Group → Ungroup) to edit every layer.</p>
+      <div class="grid2">
+        <label class="field">Slide
+          <select id="slideSize"><option value="169">16:9</option><option value="43">4:3</option></select>
+        </label>
+        <label class="field">Placement
+          <select id="placement">
+            <option value="full">Full slide</option>
+            <option value="center">Centre (⅔ width)</option>
+            <option value="left">Left half</option>
+            <option value="right">Right half</option>
+            <option value="match">Keep my area's shape</option>
+          </select>
+        </label>
+        <label class="field png-only hidden">Resolution
+          <select id="pngScale"><option value="2">2× (screen)</option><option value="3" selected>3× (sharp)</option><option value="4">4× (print)</option></select>
+        </label>
+      </div>
+      <label class="field">Title on map <input id="title" type="text" placeholder="optional" /></label>
+      <div class="row wrap">
+        <label class="check small"><input type="checkbox" id="legend" checked /> Legend</label>
+        <label class="check small"><input type="checkbox" id="scale" checked /> Scale bar</label>
+        <label class="check small"><input type="checkbox" id="north" checked /> North arrow</label>
+      </div>
+    </section>
+
+    <section class="card" id="previewCard">
+      <h2>Preview <span id="stats" class="opt"></span></h2>
+      <div id="busy" class="busy hidden"><div class="spinner"></div><div><div id="busyMsg">Working…</div><div class="hint">Elapsed <span id="busyTime">0 s</span> · first load of an area can take up to a minute</div></div></div>
+      <div id="errorBox" class="errorbox hidden"></div>
+      <div id="preview" class="preview"><div class="empty">Select an area, then press Preview.</div></div>
+    </section>
+  </main>
+
+  <footer class="actions">
+    <button id="btnPreview" class="btn ghost">Preview</button>
+    <button id="btnInsert" class="btn primary">Insert into slide</button>
+    <button id="btnCopy" class="btn ghost hidden" title="Copy the map as a picture, then Ctrl+V in PowerPoint">Copy</button>
+  </footer>
+
+  <div id="fatal" class="fatal hidden"></div>
+  <script>
+    // ES5 on purpose: reports problems even if the main script cannot run.
+    (function () {
+      function show(msg) {
+        var el = document.getElementById('fatal');
+        el.innerHTML = '<b>Fès Maps could not start</b><div>' + String(msg).replace(/</g, '&lt;') + '</div>';
+        el.className = 'fatal';
+      }
+      window.onerror = function (m, src, line) { show(m + (src ? ' (' + src.split('/').pop() + ':' + line + ')' : '')); };
+      window.addEventListener && window.addEventListener('unhandledrejection', function (e) { show(e.reason && (e.reason.message || e.reason)); });
+      var legacy = !window.fetch || !window.Promise || typeof Symbol === 'undefined';
+      if (legacy) show('This PowerPoint uses an old built-in browser (Internet Explorer). Update Office (File → Account → Update Options → Update Now) or use PowerPoint for the web.');
+      setTimeout(function () { if (!window.__fesReady && !legacy) show('The add-in script did not load. Reload the page (F5). If it persists, send a screenshot of this message.'); }, 12000);
+    })();
+  </script>
+  <script src="fes-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
